@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioLearning - Tema 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init({ publicKey: "3LjnpLaDboHWv0VPY" });
+        })();
+    </script>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .iframe-container { position: relative; width: 100%; height: 75vh; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .nav-btn { transition: all 0.3s ease; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .nav-btn.active { border-color: #10b981; color: #10b981; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        .dot-pulse { animation: pulse-dot 1.2s infinite; }
+        .question-img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen">
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-xl font-black text-emerald-600 tracking-tight">UNIDAD 3</h1>
+                    <p class="text-slate-500 font-bold text-xs uppercase">1.3 Transcripción y traducción del ADN</p>
+                </div>
+               
+                <nav class="flex flex-wrap justify-center gap-1 md:gap-4">
+                    <button onclick="prepQuiz('deber', this)" class="nav-btn active px-3 py-2 font-bold text-slate-700 flex items-center gap-2">
+                        <span>🧪</span> Deber
+                    </button>
+                    <button onclick="prepQuiz('evaluacion', this)" class="nav-btn px-3 py-2 font-bold text-slate-700 flex items-center gap-2">
+                        <span>📝</span> Repaso
+                    </button>
+                    <button onclick="prepQuiz('extra', this)" class="nav-btn px-3 py-2 font-bold text-slate-700 flex items-center gap-2">
+                        <span>📚</span> Práctica
+                    </button>
+                    <button onclick="prepQuiz('evaluacion_final', this)" class="nav-btn px-3 py-2 font-bold text-slate-700 flex items-center gap-2">
+                        <span>📊</span> Evaluación
+                    </button>
+                    <button onclick="showSection('pdf', this)" class="nav-btn px-3 py-2 font-bold text-slate-700 flex items-center gap-2">
+                        <span>📋</span> Pizarra
+                    </button>
+                    <button onclick="showSection('video', this)" class="nav-btn px-3 py-2 font-bold text-slate-700 flex items-center gap-2">
+                        <span>🎥</span> Video
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <main id="app" class="max-w-5xl mx-auto p-6">
+    </main>
+    <script>
+        const DRIVE_PDF_URL = "https://drive.google.com/file/d/17Ukf4QbVxBgE5t-kI9w7UEnYB4QzNF1I/view?usp=sharing";
+        const DRIVE_VIDEO_URL = "https://drive.google.com/file/d/1o8EwHBCwCRN892qbzwBoaCiMfUlZxYNp/view?usp=sharing";
+
+        // PRINCIPAL (Deber + Repaso) 30 preguntas
+        const quizData = [
+            { question: 'En las células eucariotas, la traducción ocurre en:', options: ['El núcleo', 'El citoplasma y el retículo endoplasmático rugoso', 'La membrana plasmática', 'La mitocondria exclusivamente'], answer: 'El núcleo', explanation: 'Lo que caracteriza una célula eucariota es poseer núcleo en donde se almacena todo la información genética como el ADN y ARN.  Por ello la traducción se da en el núcleo.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En la traducción, el codón AUG cumple la función de:', options: ['Señal de terminación Codón de inicio que codifica para metionina', 'Codón de inicio que codifica para metionina', 'Mutación sin sentido', 'Señal de replicación'], answer: 'Codón de inicio que codifica para metionina', explanation: 'El codón AUG tiene como función servir como codón de inicio marcando el principio de la síntesis de proteínas y codifica para el aminoácido metionina.', multi: 'OFF', maxSelect: 1 },
+            { question: '¿Cuál de las siguientes combinaciones representa los codones de terminación en la traducción?', options: ['UUU, UUC, UUA', 'AUG, GUG, CUG', 'UAA, UAG, UGA', 'AAA, AAG, AAC'], answer: 'UAA, UAG, UGA', explanation: 'El UUA, UAG Y UGA son los tres nucleótidos que el ARNm no codifican ningún aminoácido y señala el final de la síntesis de proteínas al final de la traducción.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Sobre la traducción, identifica la afirmación incorrecta:', options: ['Requiere ARNm, ARNt y ribosomas', 'Es un proceso que ocurre después de la transcripción', 'Convierte proteínas en ARN', 'Tiene fases de iniciación, elongación y terminación'], answer: 'Convierte proteínas en ARN', explanation: 'Correcta: El ARNm lleva el código genético; El ARNt transporta los aminoácidos y los ribosomas son las estructuras donde ocurre el ensamblaje. <br> Correcta:  La transcripción es el proceso de crear ARNm a partir de ADN. La traducción sigue, utilizando ese ARNm para crear la proteína. <br> Incorrecta: Describe el proceso de manera inversa. <br> Correcta: Se divide en estas tres etapas fundamentales para garantizar la correcta síntesis de la cadena polipeptídica.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Completa la frase: En la transcripción, la ARN polimerasa lee la cadena molde en dirección ______ y sintetiza el ARN en dirección ______.', options: ['5’→3’ / 3’→5’', '3’→5’ / 5’→3’', '5’→3’ / 5’→3’', '3’→5’ / 3’→5’'], answer: '3’→5’ / 5’→3’', explanation: '<br> <img src="https://drive.google.com/thumbnail?id=1WJjfNnSMzXqDSdD199KPduUoDc93VBtQQ7QewOeMLW8&sz=w800-h600" width="600" height="350" alt="Descripción">.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En un experimento, un investigador bloquea la acción de la ARN polimerasa. ¿Qué proceso quedará directamente afectado?', options: ['Traducción', 'Transcripción', 'Replicación', 'Síntesis proteica en el ribosoma'], answer: 'Transcripción', explanation: 'La ARN polimerasa es la enzima responsable de leer la secuencia de ADN y sintetizar una molécula de ARN o también conocido como transcripción. Al bloquear la enzima, se detiene la producción de ARN a partir del ADN.', multi: 'OFF', maxSelect: 1 },
+            { question: '¿Cuál de las siguientes moléculas se produce directamente al finalizar la transcripción?', options: ['Cadena polipeptídica', 'ARNm', 'ARNt cargado', 'Ribosoma funcional'], answer: 'ARNm', explanation: 'El ARNm es el producto directo de la transcripción porque este proceso consiste en copiar la secuencia de una porción del ADN a una molécula de ARN complementaria. <br> La enzima ARN polimerasa se encarga de realizar esta copia. El ARNm lleva el "mensaje" (la información genética) fuera del núcleo (en eucariotas) hacia los ribosomas para ser traducido en proteína.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En células eucariotas, después de la transcripción, el ARNm sufre modificaciones. Una de ellas es:a) Eliminación de intrones y unión de exones', options: ['Eliminación de intrones y unión de exones', 'Adición de aminoácidos', 'Cambio de uracilo a timina', 'Duplicación de la secuencia'], answer: 'Eliminación de intrones y unión de exones', explanation: 'En las células eucariotas, la transcripción produce inicialmente un transcrito primario o pre-ARNm en el núcleo. <br> Este pre-ARNm debe someterse a un proceso de maduración o procesamiento postranscripcional antes de ser exportado al citoplasma. El evento central de esta maduración es el corte y empalme (splicing), llevado a cabo por el complejo molecular llamado espliceosoma (spliceosome), el cual remueve las secuencias no codificantes (intrones) y empalma las secuencias codificantes (exones).', multi: 'OFF', maxSelect: 1 },
+            { question: 'Si una mutación elimina el codón de terminación de un ARNm, lo más probable es que:', options: ['La proteína se sintetice normalmente', 'La síntesis proteica no comience', 'Se genere una proteína más larga de lo normal', 'No se transcriba el gen'], answer: 'Se genere una proteína más larga de lo normal', explanation: 'Cuando ocurre una mutación que destruye o elimina el codón de parada original (UAA, UAG o UGA) —proceso conocido como mutación sin parada o nonstop mutation—, el ribosoma no recibe la señal para reclutar los factores de liberación. En su lugar, continúa la lectura y traducción de los nucleótidos ubicados en la región 3′no traducida (3′-UTR) del ARNm hasta encontrar un nuevo codón de parada en pauta o llegar al final de la molécula, lo que añade aminoácidos adicionales al extremo C-terminal de la cadena.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En la traducción, la función principal del ARNt es:', options: ['Llevar aminoácidos al ribosoma según el codón correspondiente', 'Transportar el mensaje genético desde el núcleo', 'Formar la estructura del ribosoma', 'Modificar el ARNm'], answer: 'Llevar aminoácidos al ribosoma según el codón correspondiente', explanation: 'El ARN de transferencia (ARNt) actúan como molécula adaptadora en la traducción. En un extremo se une covalentemente a un aminoácido específico, mientras que en el otro extremo presenta un triplete de nucleótidos denominado anticodón, el cual se aparea por complementariedad de bases con el codón del ARNm para garantizar que se añada el aminoácido correcto a la cadena polipeptídica.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En un laboratorio, un investigador observa que, al añadir un inhibidor específico que bloquea el uso de ATP y GTP en una célula, la síntesis de proteínas se detiene por completo. Considerando el papel de estas moléculas en el proceso de traducción, ¿cuál es la explicación más lógica de este fenómeno?', options: ['El ADN no puede desenrollarse para ser copiado', 'El ribosoma no puede desplazarse ni los ARNt cargarse con aminoácidos', 'El ARNm no puede ser exportado del núcleo', 'El código genético no puede leerse correctamente'], answer: 'El ribosoma no puede desplazarse ni los ARNt cargarse con aminoácidos', explanation: 'El ATP se utiliza para cargar los ARNt con sus aminoácidos correspondientes y el GTP se usa para mover el ribosoma a lo largo del ARNm y para unir los aminoácidos en la cadena en crecimiento. Por tanto, si un inhibidor bloquea el uso de ATP y GTP, los ARNt no pueden cargarse y el ribosoma no puede desplazarse, lo que detiene por completo la síntesis de proteínas.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En un experimento, un investigador bloquea el GTP en una célula. Como resultado, la síntesis proteica se detiene. Esto ocurre porque el GTP proporciona energía para:', options: ['La replicación del ADN', 'El desplazamiento del ribosoma y la unión de factores de elongación', 'La formación del ARNm', 'La degradación de proteínas'], answer: 'El desplazamiento del ribosoma y la unión de factores de elongación', explanation: 'La síntesis de proteínas se detiene al bloquear el GTP porque esta molécula proporciona la energía necesaria para que el ribosoma se desplace a lo largo del ARNm y para que los factores de elongación funcionen correctamente durante la traducción. Sin GTP, el ribosoma no puede avanzar ni incorporar nuevos aminoácidos, por lo tanto, la proteína no puede formarse.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En la transcripción:', options: ['La ARN polimerasa sintetiza ARN en dirección 3’→5’', 'La timina del ADN se sustituye por uracilo en el ARN', 'El proceso ocurre en el citoplasma en eucariotas', 'La proteína se forma directamente a partir del ADN'], answer: 'La timina del ADN se sustituye por uracilo en el ARN', explanation: 'Durante la transcripción, el ARN se forma usando el ADN como molde. En este proceso, la timina (T) del ADN es reemplazada por uracilo (U) en el ARN. Por eso, cuando en el ADN hay una adenina (A), en el ARN se une un uracilo (U) en lugar de una timina.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Acerca de la traducción, selecciona la afirmación incorrecta:', options: ['Ocurre en los ribosomas del citoplasma', 'Necesita ARNm, ARNt y ribosomas', 'Convierte el ADN directamente en proteínas', 'Tiene fases de iniciación, elongación y terminación'], answer: 'Convierte el ADN directamente en proteínas', explanation: 'Es una afirmación biológicamente incorrecta. El ADN permanece en el núcleo en eucariotas o libre en el nucleoide en procariotas y se transcribe a ARNm antes de que ocurra la traducción.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Un científico observa que un ARNm tiene un codón UAA en medio de su secuencia. ¿Qué espera que suceda con la proteína sintetizada?', options: ['Se producirá normalmente', 'La proteína será más corta de lo esperado', 'Se sintetizará una proteína más larga', 'La transcripción se detendrá'], answer: 'La proteína será más corta de lo esperado', explanation: 'El triplete UAA es uno de los tres codones de parada o de terminación del código genético. Si se encuentra en medio de la secuencia codificante de una molécula de ARNm (fenómeno conocido como una mutación sin sentido o de terminación prematura), el ribosoma reconocerá esta señal antes de tiempo y finalizará el ensamblaje de la proteína, liberando una cadena polipeptídica truncada o más corta.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Durante la traducción, los ARNt se unen a los codones del ARNm mediante un anticodón complementario. El sitio del ribosoma por donde salen los ARNt descargados se llama ________.', options: ['Sitio A', 'Sitio P', 'Sitio E', 'Sitio R'], answer: 'Sitio E', explanation: 'Durante la traducción, el ribosoma tiene tres sitios principales: <br> Sitio A: donde entra el ARNt con su aminoácido. <br> Sitio P: donde se forma el enlace peptídico. <br> Sitio E: por donde sale el ARNt descargado después de transferir su aminoácido.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Relaciona cada codón de terminación con su descripción: <br> 1. UAA <br> 2. UAG <br> 3. UGA <br> a) Señal de terminación de la proteína <br> b) No codifica aminoácidos <br> c) Actúa como liberador del polipéptido', options: ['1a, 2b, 3c', '1c, 2b, 3a', '1b, 2a, 3c', '1a, 2c, 3b'], answer: '1a, 2c, 3b', explanation: '1a, 2c, 3b.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En procariotas:', options: ['a) La traducción ocurre solo después de que termina la transcripción', 'b) El ARNm puede ser traducido mientras aún se transcribe', 'c) Existe separación física entre núcleo y ribosomas', 'd) Los codones se leen en dirección 3’→5’'], answer: 'b) El ARNm puede ser traducido mientras aún se transcribe', explanation: 'En las células procariotas. como las bacterias, al no existir una envoltura nuclear que delimite el material genético, el ADN y los ribosomas se encuentran en el mismo compartimento celular (el citoplasma). Esto permite el fenómeno conocido como acoplamiento de la transcripción y la traducción: a medida que la ARN polimerasa va sintetizando el extremo 5′de la molécula de ARNm, los ribosomas se unen de inmediato a ella para comenzar a traducir la proteína antes de que la transcripción haya finalizado.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En un ARNm, se inserta una base extra al inicio del segundo codón. La proteína resultante:', options: ['No sufrirá cambios', 'Tendrá solo un aminoácido diferente', 'Cambiará todos los aminoácidos posteriores', 'Se sintetizará normalmente pero más rápido'], answer: 'Cambiará todos los aminoácidos posteriores', explanation: 'Cuando se inserta en el ARNm una base extra la proteína provoca un cambio en el marco de lectura .El ribosoma, al leer la secuencia en grupos de tres (codones), se desplaza y redefine todos los codones a partir del punto de la inserción. Esto resulta en una proteína donde todos los aminoácidos posteriores al punto de la base extra serán diferentes y a menudo la síntesis se detiene antes debido a la aparición de un codón de parada. Por lo tanto, la proteína resultante cambiará todos los aminoácidos posteriores.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El código genético se considera degenerado porque ________.', options: ['Un codón puede codificar varios aminoácidos', 'Varios codones pueden codificar el mismo aminoácido', 'Cada codón codifica para solo un aminoácido', 'Todos los codones son idénticos'], answer: 'Varios codones pueden codificar el mismo aminoácido', explanation: 'La degeneración (o redundancia) del código genético es la propiedad por la cual existen más codones que aminoácidos: hay 64 combinaciones posibles de tripletes de nucleótidos para codificar únicamente 20 aminoácidos estándar. Por esta razón, la mayoría de los aminoácidos están codificados por más de un codón (denominados codones sinónimos).', multi: 'OFF', maxSelect: 1 },
+            { question: 'Relaciona cada tipo de ARN con su función principal en la célula: <br> 1. ARNm <br> 2. ARNt <br> 3. ARNr <br> a) Forma la estructura y función del ribosoma <br> b) Lleva la información genética del núcleo al citoplasma <br> c) Transporta aminoácidos según los codones del ARNm}', options: ['1a, 2c, 3b', '1c, 2b, 3a', '1b, 2c, 3a', '1b, 2a, 3c'], answer: '1b, 2c, 3a', explanation: '1b, 2c, 3a.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Cuando el ribosoma llega a un codón de terminación en el ARNm, ________.', options: ['Continúa añadiendo aminoácidos', 'Se detiene la síntesis y se libera el polipéptido', 'Cambia el marco de lectura', 'Se inicia la replicación'], answer: 'Se detiene la síntesis y se libera el polipéptido', explanation: 'Dado que no existe ningún ARNt con un anticodón capaz de aparearse con un codón de parada, una proteína llamada factor de liberación ingresa al sitio A del ribosoma. Esto cataliza la hidrólisis del enlace que une la cadena proteica al último ARNt, liberando el polipéptido recién sintetizado y provocando el desensamblaje de las subunidades ribosómicas.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Un estudiante introduce un inhibidor de la ARN polimerasa en células eucariotas. ¿Qué proceso se verá afectado directamente y qué consecuencia tendrá?', options: ['Traducción; no se sintetizan proteínas', 'Transcripción; no se produce ARNm', 'Replicación; no se copia ADN', 'Transporte nuclear; el ARNm no sale del núcleo'], answer: 'Transcripción; no se produce ARNm', explanation: 'Si se introduce un inhibidor en la ARN polimerasa, se bloquea la transcripción, que es el proceso de sintetizar ARN a partir de una plantilla de ADN. Esto detiene la producción de diferentes tipos de ARN, como el ARNm, el ARNt y el ARNr, lo que a su vez impide la síntesis de proteínas, un proceso fundamental para la vida celular.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Durante la elongación de la traducción:', options: ['Los ARNt descargados se unen al sitio A', 'Los aminoácidos se ensamblan formando enlaces peptídicos', 'El ARNm se sintetiza a partir de ADN', 'Los intrones se eliminan del ARNm'], answer: 'Los aminoácidos se ensamblan formando enlaces peptídicos', explanation: 'Durante la elongación de la traducción es la fase de la síntesis de proteínas en la que los ribosomas leen el ARNm y añaden secuencialmente aminoácidos para construir una cadena polipeptídica.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Una característica de la transcripción en eucariotas es que:', options: ['Puede ocurrir simultáneamente con la traducción', 'Ocurre en el núcleo y requiere procesamiento del ARNm', 'No se forman ARNr ni ARNt', 'El ribosoma lee directamente el ADN'], answer: 'Ocurre en el núcleo y requiere procesamiento del ARNm', explanation: 'La transcripción se lleva a cabo dentro del núcleo celular. El producto inicial es un pre-ARNm que debe pasar por maduración o procesamiento postranscripcional (adición de la caperuza 5′, adición de la cola de poli-A y eliminación de intrones por splicing) antes de ser exportado al citoplasma para su traducción.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Durante un experimento, se observa que una proteína sintetizada en células animales carece de aminoácidos en el extremo N-terminal. Esto podría deberse a:', options: ['Un error en la replicación del ADN', 'Un codón de inicio defectuoso o mutado en el ARNm', 'La ausencia de ribosomas en el citoplasma', 'Mutaciones en el ARNr'], answer: 'Un codón de inicio defectuoso o mutado en el ARNm', explanation: 'Un codón de inicio defectuoso o mutado en el ARNm representa un defecto directo en el mensaje que guía el comienzo de la síntesis de la proteína.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El ribosoma está formado por ________ y proteínas ribosomales, y su función principal es catalizar la formación de ________ entre aminoácidos.', options: ['ARNm / codones', 'ARNr / enlaces peptídicos', 'ARNt / anticodones', 'ADN / enlaces fosfodiéster'], answer: 'ARNr / enlaces peptídicos', explanation: 'Los ribosomas son complejos ribonucleoproteicos formados por proteínas y ARN ribosomal (ARNr). Durante la traducción, el ARNr actúa como una ribozima (específicamente en el sitio catalítico de la subunidad mayor) encargada de formar los enlaces peptídicos que unen covalentemente los aminoácidos para construir la proteína.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Un estudiante inserta un codón de terminación prematuro en el ARNm de una proteína. Al traducirlo, la proteína será:', options: ['Más larga de lo normal', 'Truncada y probablemente no funcional', 'Exactamente igual a la original', 'Traducida en un marco alternativo'], answer: 'Truncada y probablemente no funcional', explanation: 'La proteína estará incompleta, ya que solo se sintetizará la porción del ARNm que precede al codón de terminación prematuro. La estructura y función de una proteína dependen de su forma tridimensional completa por lo tanto casi siempre perderá su capacidad para plegarse correctamente o interactuar con otras moléculas, volviéndose no funcional.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El sentido de lectura del ARNm y el sentido de síntesis de la proteína son:', options: ['ARNm 3’→5’; proteína C→N', 'ARNm 5’→3’; proteína N→C', 'ARNm 5’→3’; proteína C→N', 'ARNm 3’→5’; proteína N→C'], answer: 'ARNm 5’→3’; proteína N→C', explanation: 'Lectura del ARNm (5′→3′): El ribosoma avanza a lo largo de la cadena de ARN mensajero decodificando los triplete de nucleótidos (codones) desde el extremo 5′hacia el extremo 3′. <br> Síntesis de la proteína (𝑁→𝐶): La cadena polipeptídica se ensambla desde el extremo N-terminal (grupo amino del primer aminoácido, metionina) hacia el extremo C-terminal (grupo carboxilo del último aminoácido añadido), donde se forman los enlaces peptídicos secuenciales. <br> <img src="https://drive.google.com/thumbnail?id=1FbnFm9vkM31YAo94OKx6_JM1_x_RUeIvxy5_TcFnvNA&sz=w800-h600" width="400" height="350" alt="Descripción">', multi: 'OFF', maxSelect: 1 },
+            { question: 'Un investigador observa que, tras mutar un gen, el ARNm resultante contiene intrones que no se eliminan. Esto provoca que:', options: ['La proteína sintetizada sea funcional', 'La traducción se detenga o genere una proteína no funcional', 'La transcripción se detenga ', 'Los ribosomas funcionen más rápido '], answer: 'La traducción se detenga o genere una proteína no funcional', explanation: 'Refleja la consecuencia directa de la retención de intrones: el ribosoma encuentra codones de parada dentro del intrón deteniendo la síntesis, o traduce secuencias no deseadas que generan una proteína defectuosa.', multi: 'OFF', maxSelect: 1 }
+        ];
+
+        // Práctica 20 preguntas
+        const quizDataExtra = [
+            { question: 'De las siguientes enunciados cual no corresponde a la síntesis de proteínas:', options: ['La traducción ocurre en los ribosomas', 'La lectura del ARNm es 5’→3’', 'Los codones de terminación codifican aminoácidos esenciales', 'Los ARNt transportan aminoácidos al ribosoma'], answer: 'Los codones de terminación codifican aminoácidos esenciales', explanation: 'Los codones de terminación no codifican para ningún aminoácido. Simplemente son señales de "Alto" de la síntesis de proteínas.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Un ribosoma en eucariotas comienza la traducción pero se encuentra con un ARNm sin el codón AUG inicial. ¿Qué ocurrirá?', options: ['La traducción iniciará en el primer codón disponible', 'La traducción no se iniciará y no se producirá proteína', 'La proteína será más larga', 'La ARN polimerasa compensará la falta del codón'], answer: 'La traducción no se iniciará y no se producirá proteína', explanation: 'En eucariotas AUG es el codón de inicio esencial. Si está ausente, el ribosoma no puede completar el complejo de iniciación, lo que significa que la subunidad grande nunca se unirá y la síntesis de la cadena de aminoácidos no comenzará.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Durante el proceso de transcripción en células eucariotas, la enzima principal que sintetiza el ARN a partir de la hebra de ADN molde es ___________.', options: ['ARN polimerasa I', 'ARN polimerasa II', 'ARN polimerasa III', 'ADN polimerasa'], answer: 'ARN polimerasa II', explanation: 'La enzima principal responsable de sintetizar la hebra de ARN que se convertirá en la plantilla para la síntesis de proteínas  es la polimerasa II.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Une cada molécula con su función principal en el proceso de traducción: <br> 1) ARNm <br> 2) ARNt <br> 3) Ribosoma <br> 4) Aminoácidos <br> a) Transportan los aminoácidos hasta el ribosoma. <br> b) Secuencia de codones que determina la proteína. <br> c) Lugar físico donde ocurre la síntesis de proteínas. <br> d) Unidades que se enlazan formando la proteína.', options: ['1b, 2a, 3c, 4d', '1b, 2c, 3a, 4d', '1b, 2a, 3d, 4c', '1d, 2a, 3c, 4b'], answer: '1b, 2a, 3c, 4d', explanation: '1b, 2a, 3c, 4d.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El proceso de traducción en células eucariotas siempre inicia con el codón AUG, que codifica para el aminoácido metionina.', options: ['Verdadero', 'Falso', 'Verdadero solo en procariotas', 'Falso, porque AUG codifica triptófano'], answer: 'Verdadero', explanation: 'El codón AUG es el que va dar inicio a la traducción.', multi: 'OFF', maxSelect: 1 },
+            { question: '¿Cuál de las siguientes afirmaciones NO corresponde al proceso de transcripción?', options: ['El ARN se sintetiza en dirección 5’ → 3’.', 'Se usa como molde la hebra complementaria del ADN.', 'Se necesitan ribosomas para la formación del ARNm.', 'Se incorpora uracilo en lugar de timina.'], answer: 'Se necesitan ribosomas para la formación del ARNm.', explanation: 'Los ribosomas son necesarios para la traducción (síntesis de proteínas). La formación del ARNm (transcripción) requiere la enzima ARN polimerasa.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Un investigador bloquea la función de los ARNt en una célula. ¿Qué proceso se vería directamente interrumpido?', options: ['Replicación del ADN', 'Transcripción del ADN', 'Traducción del ARNm', 'Transcripción inversa'], answer: 'Traducción del ARNm', explanation: 'La falta de ARNt funcional significa que no se pueden añadir aminoácidos a la cadena en crecimiento, deteniendo la síntesis de proteínas.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El conjunto de tres nucleótidos consecutivos en el ARNm que codifican un aminoácido recibe el nombre de __________.', options: ['Triplete', 'Codón', 'Anticodón', 'Intrón'], answer: 'Codón', explanation: 'Es la unidad de tres bases en el ARNm que especifica qué aminoácido debe añadirse a la cadena polipeptídica o si la traducción debe detenerse (codón de terminación).', multi: 'OFF', maxSelect: 1 },
+            { question: 'Respecto al procesamiento del ARNm en eucariotas:', options: ['El ARNm se traduce inmediatamente después de ser transcrito, sin modificaciones.', 'Se eliminan intrones y se unen exones para formar un ARNm maduro.', 'Se añaden nucleótidos de guanina y adenina solo en el extremo 3’.', 'El ARNm no necesita ningún tipo de modificación antes de salir del núcleo.'], answer: 'Se eliminan intrones y se unen exones para formar un ARNm maduro.', explanation: 'Este proceso se llama splicing (corte y empalme) y es una modificación esencial que remueve las secuencias no codificantes (intrones) y une las secuencias codificantes (exones).', multi: 'OFF', maxSelect: 1 },
+            { question: 'Relaciona cada etapa de la traducción con la descripción que le corresponde: <br> 1) Iniciación <br> 2) Elongación <br> 3) Terminación <br> a) El ribosoma se une al ARNm en el codón AUG. <br> b) Se añaden aminoácidos sucesivos formando la cadena polipeptídica. <br> c) Se reconoce un codón de paro (UAA, UAG o UGA)', options: ['1a, 2b, 3c', '1b, 2a, 3c', '1a, 2c, 3b', '1b, 2b, 3c'], answer: '1a, 2b, 3c', explanation: '1a, 2b, 3c.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En la traducción, los sitios A, P y E del ribosoma cumplen funciones específicas. El sitio P es donde __________.', options: ['Llega el ARNt con el siguiente aminoácido', 'Se libera el ARNt vacío', 'Se encuentra el ARNt con la cadena en formación', 'Se une la subunidad ribosomal menor'], answer: 'Se encuentra el ARNt con la cadena en formación', explanation: 'Sitio P (Peptidil): Es donde se encuentra el ARNt que lleva unida la cadena polipeptídica (proteína) en crecimiento.', multi: 'OFF', maxSelect: 1 },
+            { question: '¿Cuál de los siguientes eventos ocurre en procariotas pero no en eucariotas?', options: ['Transcripción y traducción ocurren al mismo tiempo.', 'El ARNm se procesa con cap y cola poli-A.', 'El ribosoma se une al sitio Shine-Dalgarno.', 'La traducción ocurre en el citoplasma.'], answer: 'Transcripción y traducción ocurren al mismo tiempo.', explanation: 'Como los procariotas no tienen núcleo, tan pronto como el ARNm comienza a ser sintetizado (transcripción), los ribosomas pueden unirse a su extremo 5\' e iniciar la traducción, todo en el citoplasma.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El proceso de traducción depende de una molécula que reconoce simultáneamente un codón en el ARNm y transporta un aminoácido específico. Esa molécula es __________.', options: ['Ribosoma', 'ARNt', 'ARNr', 'ARN polimerasa'], answer: 'ARNt', explanation: 'La molécula que actúa como un "adaptador" al reconocer simultáneamente el código del ARNm y transportar el aminoácido correcto es el ARN de transferencia ARNt.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Sobre el código genético:', options: ['Es degenerado, ya que varios codones pueden codificar el mismo aminoácido.', 'Es universal, compartido por casi todos los seres vivos.', 'Es ambiguo, porque un codón puede codificar varios aminoácidos distintos.', 'Tiene tres codones de paro que no codifican aminoácidos.'], answer: 'Es ambiguo, porque un codón puede codificar varios aminoácidos distintos.', explanation: 'El código genético es NO AMBIGUO. Esto significa que un codón específico siempre codifica para el mismo y único aminoácido o para una señal de paro. Si fuera ambiguo, la síntesis de proteínas sería caótica.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Si se muta un codón de terminación UGA en un codón UGG (triptofano), ¿qué sucederá con la proteína?', options: ['La proteína será más corta de lo normal.', 'La proteína será más larga de lo normal.', 'La proteína no podrá comenzar a traducirse.', 'La proteína no sufrirá ningún cambio.'], answer: 'La proteína será más larga de lo normal.', explanation: 'La traducción continúa hasta que el ribosoma encuentra un nuevo codón de terminación más adelante en el ARNm o hasta que el ribosoma se disocia al final de la secuencia.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El proceso de transcripción en procariotas se inicia cuando la ARN polimerasa reconoce una secuencia específica llamada __________.', options: ['Operón ', 'Promotor', 'Codón', 'Intrón '], answer: 'Promotor', explanation: 'El promotor es una secuencia de ADN ubicada antes del gen que indica dónde debe comenzar la transcripción y en qué hebra.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En bacterias, un mismo ARNm puede contener varios genes, organizados en operones.', options: ['Verdadero', 'Falso', 'Verdadero solo en eucariotas ', 'Falso porque cada ARNm codifica solo un gen '], answer: 'Verdadero', explanation: 'ARNm en organismo procariotas puede contener varios genes que a su vez están organizados en operones.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Los intrones se eliminan del transcrito primario en eucariotas mediante un proceso conocido como __________.', options: ['Splicing', 'Traducción', 'Replicación', 'Translocación'], answer: 'Splicing', explanation: 'Splicing tienen como función eliminar los intrones del transcrito en células eucariotas.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Relaciona la etapa con la descripción del proceso de transcripción: <br> 1) Iniciación <br> 2) Elongación <br> 3) Terminación <br> a) La ARN polimerasa añade ribonucleótidos complementarios. <br> b) La ARN polimerasa reconoce el promotor. <br> c) La ARN polimerasa se desprende', options: ['1b, 2a, 3c', '1c, 2a, 3b', '1a, 2b, 3c', '1b, 2c, 3a'], answer: '1b, 2a, 3c', explanation: '1b, 2a, 3c.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Durante la traducción, la energía para mover el ribosoma y asegurar la unión de aminoácidos proviene principalmente de:', options: ['ATP', 'GTP', 'NADH', 'FADH2'], answer: 'GTP', explanation: 'El GTP es la fuente clave para el movimiento del ribosoma y la entrega de los ARNt.', multi: 'OFF', maxSelect: 1 }
+        ];
+
+        // EVALUACIÓN 16 preguntas
+        const quizDataEvaluacion = [
+            { question: 'El código genético podemos decir que solamente tiene cuatro letras, que equivale a las cuatro bases distintas que forman parte de los nucleótidos y que son?', options: ['Adenina, Guanina, Citosina, Timina', 'Adenina, Guanina, Citidina, Timina', 'Adenina, Guanosima, Citidina, Timina', 'Adenina, Uridina, Citosina, Guanina'], answer: 'Adenina, Guanina, Citosina, Timina', explanation: 'La secuencia lineal de nucleótidos que constituye el código genético se basa en cuatro bases nitrogenadas específicas: dos purinas (Adenina ["A"] y Guanina ["G"]) y dos pirimidinas (Citosina ["C"] y Timina ["T"]). <br> Estas cuatro letras ("A, T, C, G") se organizan en tripletes (codones) para almacenar la información de los aminoácidos en la síntesis proteica.', multi: 'OFF', maxSelect: 1 },
+            { question: 'La transcripción es el paso de:', options: ['ADN a ARNm', 'ARNm a ADN', 'ADN a proteínas', 'ADN a ARNr'], answer: 'ADN a ARNm', explanation: 'La transcripción es el proceso de copiar la información genética del ADN para sintetizar una molécula de ARN mensajero (ARNm). <br> <img src="https://drive.google.com/thumbnail?id=1wkOubtFzhXbXsXRdMXHD9-hUR-ny9QYUInvjIdfbq-8&sz=w800-h600" width="300" height="350" alt="Descripción">', multi: 'OFF', maxSelect: 1 },
+            { question: '¿Cuál es el proceso biológico por el cual la secuencia de nucleótidos del ARN mensajero se decodifica para sintetizar una cadena de aminoácidos?', options: ['Traducción', 'Transcripción', 'Replicación', 'Transcripción inversa'], answer: 'Traducción', explanation: 'Es la segunda fase central de la expresión génica, mediante la cual la secuencia codificante de un "ARNm"se lee en el complejo ribosómico. <br> Los codones (tripletes de nucleótidos) son reconocidos secuencialmente por el anticodón complementario del "ARNt", incorporando aminoácidos específicos a la cadena polipeptídica en crecimiento mediante enlaces peptídicos.', multi: 'OFF', maxSelect: 1 },
+            { question: 'En una célula eucariota, ¿dónde tienen lugar principalmente los procesos de transcripción y traducción, respectivamente?', options: ['Ambos ocurren en el citoplasma', 'Traducción en el núcleo y transcripción en los ribosomas.', 'Transcripción en el núcleo y traducción en el citoplasma.', 'Transcripción en los ribosomas y traducción en el núcleo.'], answer: 'Transcripción en el núcleo y traducción en el citoplasma.', explanation: 'Transcripción: Se lleva a cabo en el núcleo celular, donde el "ADN"genómico es transcrito a "ARNm"primario antes de ser procesado y exportado al citosol. <br> Traducción: Ocurre en el citoplasma (en ribosomas libres o asociados al retículo endoplásmico rugoso), donde la maquinaria ribosómica ensambla las cadenas polipeptídicas.', multi: 'OFF', maxSelect: 1 },
+            { question: 'El dogma central de la biología molecular puede resumirse en la siguiente secuencia:', options: ['ADN &rarr; Proteínas &rarr;  ARN', 'ADN &rarr; ARN &rarr;  Proteínas', 'ARN &rarr; ADN &rarr;  Proteínas', 'Proteínas &rarr;  ARN &rarr;  ADN'], answer: 'ADN &rarr; ARN &rarr;  Proteínas', explanation: '<br> <img src="https://drive.google.com/thumbnail?id=1q-kSLGI6ubAr8YeeJHYkuXZbk7i63fnWuJXlW4gv0DU&sz=w800-h300" width="550" height="150" alt="Descripción">.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Los tipos de ARN son: ', options: ['ARN polimerasa I', 'ARN polimerasa II', 'Ninguna', 'ARNm, ARNr, ARNt'], answer: 'ARNm, ARNr, ARNt', explanation: '<br> <img src="https://drive.google.com/thumbnail?id=1aEPMLjbZf1Df5U_LVtmifNVf_AkUgPPuxROcfk9qyW0&sz=w800-h300" width="580" height="350" alt="Descripción">.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Si la secuencia de un codón en el ARNm es de AUC, entonces la secuencia en el ADN y en el anticodón serán respectivamente:', options: ['ATC, AUC', 'AUC, ATC', 'TAG, UAG', 'TAG, AUG'], answer: 'TAG, UAG', explanation: 'Hebra molde de ADN: Para transcribir el codón 5′−"AUC"−3′en el "ARNm", la secuencia de la hebra molde del "ADN"debe poseer los desoxirribonucleótidos complementarios ("A"→"T", "U"→"A", "C"→"G"), dando lugar a la secuencia 3′−"TAG"−5′. <br> Anticodón en el ARNt: Durante la traducción, el triplete del "ARNt"se acopla de forma antiparalela y complementaria con el codón del "ARNm"("A"→"U", "U"→"A", "C"→"G"), constituyendo el anticodón 3′−"UAG"−5′.', multi: 'OFF', maxSelect: 1 },
+            { question: '¿Cuál es el nombre de la estructura en forma de “escalera retorcida” donde se encuentra almacenada la información genética?', options: ['Cromosoma', 'Gen', 'Codón', 'Doble hélice'], answer: 'Doble hélice', explanation: 'El modelo tridimensional del "ADN"propuesto por Watson y Crick describe una estructura de doble hélice constituida por dos cadenas polinucleotídicas antiparalelas y helicoidales. <br> La analogía de la "escalera retorcida" representa la estructura donde los pasamanos son los esqueletos de desoxirribosa y fosfato, mientras que los peldaños corresponden a los pares de bases nitrogenadas unidas por puentes de hidrógeno ("A"="T" y "C"≡"G").', multi: 'OFF', maxSelect: 1 },
+            { question: 'Una proteína de 90 aminoácidos se sintetiza a partir de un ARNm de:', options: ['90 aminoácidos', '180 aminoácidos', '270 aminoácidos', '360 aminoácidos'], answer: '270 aminoácidos', explanation: '<br> <img src="https://drive.google.com/thumbnail?id=1q-CT6QxXpV6h924-yNsOqQPcBzwMHaMQdfDDv-LqUaU&sz=w800-h300" width="590" height="340" alt="Descripción">.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Una célula sintetiza dos proteínas A y B. Con respecto a los tres tipos de ARN vinculados a la síntesis de esas dos proteínas:', options: ['Serán todos iguales', 'Serán todos diferentes', 'Los ARNr y ARNt serán iguales y los ARNm serán distintos.', 'Los ARNr serán iguales y ARNt y los ARNm serán distintos.'], answer: 'Los ARNr y ARNt serán iguales y los ARNm serán distintos.', explanation: 'Cada proteína necesita su propio ARNm, por eso son distintos. <br> Los ARNt son los mismos porque sirven para transportar aminoácidos, no dependen de la proteína. <br> Los ARNr también son los mismos porque los ribosomas son iguales para sintetizar cualquier proteína.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Si un antibiótico bloquea la actividad  de la enzima de ARN polimerasa bacteriana se verían afectados:', options: ['El proceso de transcripción', 'El proceso de replicación del ADN', 'El proceso de traducción', 'La maduración del transcrito primario'], answer: 'El proceso de transcripción', explanation: 'La ARN polimerasa es la enzima que fabrica todos los tipos de ARN. Si se bloquea, la célula bacteriana no puede producir ninguno y deja de sintetizar proteínas por lo tanto afectaría al proceso de transcripción.', multi: 'OFF', maxSelect: 1 },
+            { question: 'La secuencia de nucleótidos GCCTACTTA pertenece a:', options: ['Una cadena de ARNr', 'Una cadena de ARNm', 'Una cadena de ARNr', 'Una cadena de ADN'], answer: 'Una cadena de ADN', explanation: 'La secuencia propuesta ("GCCTACTTA") contiene la base nitrogenada timina ("T"). <br> La timina (5"−metiluracilo") es una pirimidina exclusiva del ácido desoxirribonucleico (ADN). En las moléculas de ARN (ARNm, ARNr, ARNt), la timina es sustituida metabólicamente por el uracilo ("U").', multi: 'OFF', maxSelect: 1 },
+            { question: 'Una molécula de ADN posee en una de sus cadenas la secuencia ATGCTTAGCT. ¿Cuál será su cadena de ADN complementaria?', options: ['TACGAATCGA', 'UACGAAUCGA', 'GCTACCATCG', 'TACGGTTAUT'], answer: 'TACGAATCGA', explanation: 'Para poder encontrar la cadena complementaria simplemente debemos emparejar cada una de las bases nitrogenadas: A-T,T-A,G-C,C-G,T-A,T-A,A-T,G-C,C-G,T-A dando como resultado TACGAATCGA.', multi: 'OFF', maxSelect: 1 },
+            { question: 'Indique el tamaño del péptido que proporciona la siguiente secuencia sabiendo que el codón de iniciación es ATG: <br> AATTATTACATGTACAGTTTCGATTCTCAATATAGTTTTCAACAG', options: ['12', '9', '15', '30'], answer: '12', explanation: '<br> <img src="https://drive.google.com/thumbnail?id=1Gw7nSyMUw0T5Nsq41T9QzVTAiuXM2END3Om5jBfXLp8&sz=w800-h300" width="600" height="100" alt="Descripción">.', multi: 'OFF', maxSelect: 1 },
+            { question: 'La siguiente secuencia de ADN es 5’-CGATGGCTA -3’ y su cadena complementaria de ADN para ese fragmento es:', options: ['3’-CGATGGCTA-5’', '3’-GCTACCGAT-5’', '3’-ATCGGTAGC-5’', '5’-ATCGGTAGC-3’'], answer: '3’-GCTACCGAT-5’', explanation: 'Las dos hebras de la doble hélice del "ADN"corren en direcciones opuestas (antiparalelas): una hebra en sentido 5′→3′y su complementaria en sentido 3′→5′. <br> De acuerdo con la regla de apareamiento especifico de Chargaff, la Citosina ("C") se une con la Guanina ("G") ("C"≡"G") y la Adenina ("A") con la Timina ("T") ("A"="T"). <br> Aplicando la complementariedad base a base para la cadena 5^′ "−CGATGGCTA−" 3^′.', multi: 'OFF', maxSelect: 1 },
+            { question: 'La siguiente lista describe los procesos y resultados de la traducción del  ADN en una célula eucariota: <br> 1. Ingreso de ARNt según el codón del ARNm. <br> 2. Formación de la cadena polipeptídica mediante enlaces peptídicos. <br> 3. Llegada al codón de terminación y liberación del polipéptido. <br> 4. El ARNm se une a la subunidad menor del ribosoma. <br> Indique el orden correcto de estos procesos durante la traducción del ADN:', options: ['1, 2, 3, 4', '4, 1, 3, 2', '4, 1, 2, 3', '2, 3, 1, 4'], answer: '4, 1, 2, 3', explanation: '<br> <img src="https://drive.google.com/thumbnail?id=1xuADCGGoe9zXQY_ZpjgYeEAwQVXMEgZwub5_oGf_E1w&sz=w800-h300" width="700" height="400" alt="Descripción">.', multi: 'OFF', maxSelect: 1 }
+        ];
+
+        // ========== CONFIGURACIÓN DEL TEMPORIZADOR DE EVALUACIÓN ==========
+        const EVAL_TIMER_SECONDS = 960; // 16 minutos
+
+        const EVAL_TIMER_PHASES = [
+            { minSeconds: 480, colorClass: 'text-emerald-600 bg-emerald-50 border-emerald-300' },
+            { minSeconds: 60,  colorClass: 'text-amber-600 bg-amber-50 border-amber-300' },
+            { minSeconds: 0,   colorClass: 'text-red-600 bg-red-50 border-red-300' }
+        ];
+        // ==================================================================
+
+        let state = {
+            currentMode: 'deber',
+            view: 'quiz_home',
+            studentName: '',
+            studentEmail: '',
+            activeQuestions: [],
+            currentQuestion: 0,
+            score: 0,
+            selectedAnswer: null,
+            isAnswerCorrect: null,
+            emailStatus: null,
+            emailAnalysis: null,
+            emailAnalysisMsg: '',
+            timeLeft: 0
+        };
+
+        let timerInterval = null;
+
+        const disposableDomains = [
+            'tempmail.com','temp-mail.org','guerrillamail.com','10minutemail.com','mailinator.com',
+            'yopmail.com','throwawaymail.com','fakeinbox.com','trashmail.com','getnada.com',
+            'maildrop.cc','dispostable.com','sharklasers.com','guerrillamailblock.com'
+        ];
+        const trustedProviders = [
+            'gmail.com','googlemail.com','hotmail.com','hotmail.es','hotmail.co.uk','outlook.com',
+            'outlook.es','live.com','msn.com','yahoo.com','yahoo.es','icloud.com','me.com',
+            'protonmail.com','proton.me','aol.com','zoho.com','gmx.com','mail.com'
+        ];
+
+        function isValidEmailFormat(email) {
+            const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+            return re.test(email) && email.length <= 254 && !email.includes('..') && !email.startsWith('.') && !email.endsWith('.');
+        }
+
+        function analyzeEmail(email) {
+            const lower = email.toLowerCase().trim();
+            if (!lower) return { valid: false, msg: 'Escribe un correo electrónico.' };
+            if (!isValidEmailFormat(lower)) return { valid: false, msg: 'Formato inválido. Revisa que tenga @ y un dominio correcto.' };
+            const domain = lower.split('@')[1];
+            if (!domain || domain.length < 3) return { valid: false, msg: 'Dominio incompleto o inválido.' };
+            if (disposableDomains.some(d => domain === d || domain.endsWith('.' + d))) {
+                return { valid: false, msg: 'Correo temporal / desechable detectado. Usa un correo real.' };
+            }
+            const isTrusted = trustedProviders.some(p => domain === p);
+            const hasGoodTld = /\.(com|es|net|org|edu|gov|mx|ar|co|uk|de|fr|it|pt|br|cl)$/i.test(domain);
+            if (!hasGoodTld && !isTrusted) {
+                return { valid: false, msg: 'Dominio poco común o sospechoso. Usa Gmail, Hotmail/Outlook, Yahoo, etc.' };
+            }
+            let analysisText = '';
+            if (domain.includes('hotmail') || domain.includes('outlook') || domain.includes('live.com') || domain.includes('msn.com')) {
+                analysisText = 'Análisis: proveedor Microsoft (Hotmail/Outlook) detectado · formato correcto · dominio legítimo';
+            } else if (domain.includes('gmail') || domain.includes('googlemail')) {
+                analysisText = 'Análisis: proveedor Google (Gmail) detectado · formato correcto · dominio legítimo';
+            } else if (isTrusted) {
+                analysisText = 'Análisis: proveedor conocido · formato correcto · dominio legítimo';
+            } else {
+                analysisText = 'Análisis: formato válido · dominio con TLD estándar · no se detectaron patrones de correo temporal';
+            }
+            return { valid: true, msg: analysisText };
+        }
+
+        function showSection(section, btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            stopTimer();
+            const app = document.getElementById('app');
+            if (section === 'pdf') {
+                app.innerHTML = `<div class="animate-fade-in"><h2 class="text-xl font-bold mb-4">📄 Pizarra Virtual</h2><div class="iframe-container"><iframe src="${DRIVE_PDF_URL}" width="100%" height="100%" allow="autoplay"></iframe></div></div>`;
+            } else if (section === 'video') {
+                app.innerHTML = `<div class="animate-fade-in"><h2 class="text-xl font-bold mb-4">🎥 Video Clase</h2><div class="iframe-container"><iframe src="${DRIVE_VIDEO_URL}" width="100%" height="100%" allow="autoplay"></iframe></div></div>`;
+            }
+        }
+
+        function prepQuiz(mode, btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            stopTimer();
+            state = {
+                currentMode: mode,
+                view: 'quiz_home',
+                studentName: '',
+                studentEmail: '',
+                activeQuestions: [],
+                currentQuestion: 0,
+                score: 0,
+                selectedAnswer: null,
+                isAnswerCorrect: null,
+                emailStatus: null,
+                emailAnalysis: null,
+                emailAnalysisMsg: '',
+                timeLeft: 0
+            };
+            render();
+        }
+
+        function startQuiz() {
+            if (state.currentMode === 'deber') {
+                state.activeQuestions = [...quizData];
+            } else if (state.currentMode === 'evaluacion') {
+                state.activeQuestions = [...quizData]
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 10);
+            } else if (state.currentMode === 'extra') {
+                state.activeQuestions = [...quizDataExtra];
+            } else if (state.currentMode === 'evaluacion_final') {
+                state.activeQuestions = [...quizDataEvaluacion];
+            }
+            state.view = 'name_input';
+            state.emailAnalysis = null;
+            state.emailAnalysisMsg = '';
+            render();
+        }
+
+        function onEmailInput() {
+            const e = document.getElementById('email-in');
+            if (!e) return;
+            const val = e.value.trim();
+            if (val.length < 5) {
+                state.emailAnalysis = null;
+                state.emailAnalysisMsg = '';
+                updateEmailUI();
+                return;
+            }
+            state.emailAnalysis = 'checking';
+            state.emailAnalysisMsg = 'Analizando correo…';
+            updateEmailUI();
+            clearTimeout(window._emailCheckTimer);
+            window._emailCheckTimer = setTimeout(() => {
+                const result = analyzeEmail(val);
+                state.emailAnalysis = result.valid ? 'valid' : 'invalid';
+                state.emailAnalysisMsg = result.msg;
+                updateEmailUI();
+            }, 600);
+        }
+
+        function updateEmailUI() {
+            const feedback = document.getElementById('email-feedback');
+            const analysis = document.getElementById('email-analysis');
+            const input = document.getElementById('email-in');
+            if (!feedback || !analysis || !input) return;
+            if (state.emailAnalysis === 'checking') {
+                feedback.innerHTML = `<span class="text-slate-500 text-sm flex items-center gap-2"><span class="dot-pulse">●</span> Verificando…</span>`;
+                analysis.innerHTML = `<p class="text-xs text-slate-400 mt-1">${state.emailAnalysisMsg}</p>`;
+                input.classList.remove('border-red-400', 'border-emerald-400');
+                input.classList.add('border-slate-300');
+            } else if (state.emailAnalysis === 'invalid') {
+                feedback.innerHTML = `<span class="text-red-600 text-sm font-semibold">✗ Correo no válido o inexistente</span>`;
+                analysis.innerHTML = `<p class="text-xs text-red-500/80 mt-1">${state.emailAnalysisMsg}</p>`;
+                input.classList.remove('border-emerald-400', 'border-slate-300');
+                input.classList.add('border-red-400');
+            } else if (state.emailAnalysis === 'valid') {
+                feedback.innerHTML = `<span class="text-emerald-600 text-sm font-semibold">✓ Correo aceptado</span>`;
+                analysis.innerHTML = `<p class="text-xs text-emerald-600/80 mt-1">${state.emailAnalysisMsg}</p>`;
+                input.classList.remove('border-red-400', 'border-slate-300');
+                input.classList.add('border-emerald-400');
+            } else {
+                feedback.innerHTML = '';
+                analysis.innerHTML = '';
+                input.classList.remove('border-red-400', 'border-emerald-400');
+                input.classList.add('border-slate-300');
+            }
+        }
+
+        function validaDatos() {
+            const n = document.getElementById('name-in').value.trim();
+            const e = document.getElementById('email-in').value.trim();
+            if (n.length <= 2) {
+                alert("Ingresa nombre completo (mínimo 3 caracteres).");
+                return;
+            }
+            const result = analyzeEmail(e);
+            state.emailAnalysis = result.valid ? 'valid' : 'invalid';
+            state.emailAnalysisMsg = result.msg;
+            updateEmailUI();
+            if (!result.valid) return;
+            state.studentName = n;
+            state.studentEmail = e;
+            state.view = 'playing';
+            if (state.currentMode === 'evaluacion_final') {
+                startTimer();
+            }
+            render();
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function getTimerPhaseClass(remaining) {
+            for (const phase of EVAL_TIMER_PHASES) {
+                if (remaining >= phase.minSeconds) {
+                    return phase.colorClass;
+                }
+            }
+            return EVAL_TIMER_PHASES[EVAL_TIMER_PHASES.length - 1].colorClass;
+        }
+
+        function startTimer() {
+            stopTimer();
+            state.timeLeft = EVAL_TIMER_SECONDS;
+            timerInterval = setInterval(() => {
+                state.timeLeft--;
+                if (state.timeLeft <= 0) {
+                    state.timeLeft = 0;
+                    stopTimer();
+                    state.view = 'results';
+                    render();
+                    enviarCorreo();
+                    return;
+                }
+                const timerEl = document.getElementById('eval-timer');
+                if (timerEl) {
+                    timerEl.textContent = formatTime(state.timeLeft);
+                    timerEl.className = `px-3 py-1.5 rounded-xl border-2 font-black text-sm tabular-nums ${getTimerPhaseClass(state.timeLeft)}`;
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function isMultiQuestion(q) {
+            return q.multi === 'ON';
+        }
+
+        function arraysEqual(a, b) {
+            if (!Array.isArray(a) || !Array.isArray(b)) return false;
+            if (a.length !== b.length) return false;
+            const sa = [...a].sort();
+            const sb = [...b].sort();
+            return sa.every((v, i) => v === sb[i]);
+        }
+
+        function handleAnswer(idx) {
+            if (state.isAnswerCorrect !== null) return;
+            const currentQ = state.activeQuestions[state.currentQuestion];
+            const option = currentQ.options[idx];
+
+            if (isMultiQuestion(currentQ)) {
+                let selected = Array.isArray(state.selectedAnswer) ? [...state.selectedAnswer] : [];
+                const pos = selected.indexOf(option);
+                if (pos > -1) {
+                    selected.splice(pos, 1);
+                } else {
+                    if (selected.length >= currentQ.maxSelect) return;
+                    selected.push(option);
+                }
+                state.selectedAnswer = selected;
+                render();
+            } else {
+                if (state.selectedAnswer !== null) return;
+                state.selectedAnswer = option;
+                state.isAnswerCorrect = (option === currentQ.answer);
+                if (state.isAnswerCorrect) state.score++;
+                render();
+                if (state.isAnswerCorrect) {
+                    setTimeout(() => nextQuestion(), 1000);
+                }
+            }
+        }
+
+        function checkMultiAnswer() {
+            if (state.isAnswerCorrect !== null) return;
+            const currentQ = state.activeQuestions[state.currentQuestion];
+            if (!isMultiQuestion(currentQ)) return;
+            const selected = Array.isArray(state.selectedAnswer) ? state.selectedAnswer : [];
+            if (selected.length === 0) return;
+            const correctAnswers = Array.isArray(currentQ.answer) ? currentQ.answer : [currentQ.answer];
+            state.isAnswerCorrect = arraysEqual(selected, correctAnswers);
+            if (state.isAnswerCorrect) state.score++;
+            render();
+            if (state.isAnswerCorrect) {
+                setTimeout(() => nextQuestion(), 1000);
+            }
+        }
+
+        function nextQuestion() {
+            if (state.currentQuestion + 1 < state.activeQuestions.length) {
+                state.currentQuestion++;
+                state.selectedAnswer = null;
+                state.isAnswerCorrect = null;
+                render();
+            } else {
+                stopTimer();
+                state.view = 'results';
+                render();
+                enviarCorreo();
+            }
+        }
+
+        function enviarCorreo() {
+            if (!state.studentEmail) return;
+            state.emailStatus = 'sending';
+            render();
+            const scorePerc = Math.round((state.score / state.activeQuestions.length) * 100);
+            const totalQ = state.activeQuestions.length;
+            let imageUrl = '';
+            let mensaje = '';
+            if (scorePerc >= 90) {
+                imageUrl = 'https://img.icons8.com/color/128/medal2.png';
+                mensaje = `¡Excelente trabajo, ${state.studentName}! Obtuviste un resultado sobresaliente.`;
+            } else if (scorePerc >= 70) {
+                imageUrl = 'https://img.icons8.com/color/128/diploma.png';
+                mensaje = `¡Muy bien, ${state.studentName}! Has aprobado con un buen resultado.`;
+            } else if (scorePerc >= 50) {
+                imageUrl = 'https://img.icons8.com/color/128/ok.png';
+                mensaje = `Buen esfuerzo, ${state.studentName}. Sigue practicando para mejorar.`;
+            } else {
+                imageUrl = 'https://img.icons8.com/color/128/error.png';
+                mensaje = `Ánimo, ${state.studentName}. Revisa el material y vuelve a intentarlo.`;
+            }
+            const params = {
+                to_name: state.studentName,
+                to_email: state.studentEmail,
+                score: scorePerc,
+                correct_answers: state.score,
+                total_questions: totalQ,
+                mode_name: state.currentMode.toUpperCase(),
+                image_url: imageUrl,
+                mensaje: mensaje,
+                fecha: new Date().toLocaleDateString('es-ES', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                })
+            };
+            emailjs.send("service_dhvsi72", "template_cy74x9h", params)
+                .then(() => {
+                    state.emailStatus = 'success';
+                    render();
+                })
+                .catch((err) => {
+                    console.error('Error EmailJS:', err);
+                    state.emailStatus = 'error';
+                    render();
+                });
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+           
+            let modeTitle = '';
+            let modeDesc = '';
+            if (state.currentMode === 'deber') {
+                modeTitle = '🧪 Deber';
+                modeDesc = 'Resuelve las 30 preguntas del banco en orden.';
+            } else if (state.currentMode === 'evaluacion') {
+                modeTitle = '📝 Repaso';
+                modeDesc = 'Prueba de 10 preguntas seleccionadas al azar.';
+            } else if (state.currentMode === 'extra') {
+                modeTitle = '📚 Práctica';
+                modeDesc = 'Resuelve las 20 preguntas de práctica.';
+            } else if (state.currentMode === 'evaluacion_final') {
+                modeTitle = '📊 Evaluación';
+                modeDesc = 'Resuelve las 16 preguntas de la Evaluación (tiempo límite: 16 min).';
+            }
+           
+            if (state.view === 'quiz_home') {
+                app.innerHTML = `
+                <div class="text-center py-16 animate-fade-in bg-white rounded-[3rem] shadow-xl border">
+                    <h2 class="text-4xl font-black text-slate-800 mb-2">${modeTitle}</h2>
+                    <p class="text-slate-500 mb-8 text-lg">${modeDesc}</p>
+                    <button onclick="startQuiz()" class="bg-emerald-600 text-white px-12 py-5 rounded-2xl font-black text-xl hover:bg-emerald-700 transition-all">
+                        INICIAR
+                    </button>
+                </div>`;
+            }
+
+            if (state.view === 'name_input') {
+                app.innerHTML = `
+                <div class="max-w-md mx-auto bg-white p-10 rounded-[2.5rem] shadow-2xl animate-fade-in">
+                    <h2 class="text-2xl font-black mb-6 text-center">Registro de Estudiante</h2>
+                    <input id="name-in" type="text" placeholder="Nombre y Apellido completo" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 focus:border-emerald-500 outline-none">
+                   
+                    <div class="relative mb-1">
+                        <input id="email-in" type="email" placeholder="Correo para recibir nota (Gmail, Hotmail…)"
+                               class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl focus:border-emerald-500 outline-none transition-colors"
+                               oninput="onEmailInput()" onblur="onEmailInput()">
+                    </div>
+                   
+                    <div id="email-feedback" class="min-h-[22px] mb-1"></div>
+                    <div id="email-analysis" class="mb-5"></div>
+                   
+                    <button onclick="validaDatos()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all">
+                        ENTRAR AL TEST
+                    </button>
+                    <p class="text-center text-[11px] text-slate-400 mt-4">Se verifica formato y se descartan correos temporales. No se envía nada hasta terminar el test.</p>
+                </div>`;
+                setTimeout(updateEmailUI, 50);
+            }
+
+            if (state.view === 'playing') {
+                const q = state.activeQuestions[state.currentQuestion];
+                const progress = ((state.currentQuestion + 1) / state.activeQuestions.length) * 100;
+                const multi = isMultiQuestion(q);
+                const selected = multi
+                    ? (Array.isArray(state.selectedAnswer) ? state.selectedAnswer : [])
+                    : (state.selectedAnswer ? [state.selectedAnswer] : []);
+
+                const multiHint = multi
+                    ? `<p class="text-sm text-sky-600 font-semibold mb-4">
+                         Selección múltiple · elige ${q.maxSelect} respuesta${q.maxSelect > 1 ? 's' : ''}
+                         ${selected.length > 0 ? `(${selected.length}/${q.maxSelect})` : ''}
+                       </p>`
+                    : '';
+
+                const timerHtml = (state.currentMode === 'evaluacion_final')
+                    ? `<div id="eval-timer" class="px-3 py-1.5 rounded-xl border-2 font-black text-sm tabular-nums ${getTimerPhaseClass(state.timeLeft)}">
+                           ${formatTime(state.timeLeft)}
+                       </div>`
+                    : '';
+
+                app.innerHTML = `
+                <div class="animate-fade-in">
+                    <div class="flex justify-between items-center mb-6 px-4 gap-4">
+                        <span class="font-black text-emerald-600">${state.currentQuestion + 1} / ${state.activeQuestions.length}</span>
+                        <div class="flex-1 max-w-xs bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div class="bg-emerald-500 h-full transition-all" style="width:${progress}%"></div>
+                        </div>
+                        ${timerHtml}
+                    </div>
+                    <div class="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl border">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2 leading-tight">${q.question}</h2>
+                        ${multiHint}
+                        <div class="grid gap-3">
+                            ${q.options.map((opt, idx) => {
+                                let style = "border-slate-100 bg-slate-50 hover:border-emerald-200";
+                                const isSelected = selected.includes(opt);
+
+                                if (state.isAnswerCorrect !== null) {
+                                    if (multi) {
+                                        const correctSet = Array.isArray(q.answer) ? q.answer : [q.answer];
+                                        if (correctSet.includes(opt) && isSelected) {
+                                            style = "border-emerald-500 bg-emerald-100 text-emerald-800";
+                                        } else if (isSelected && !correctSet.includes(opt)) {
+                                            style = "border-red-500 bg-red-100 text-red-800";
+                                        } else if (correctSet.includes(opt) && !isSelected) {
+                                            style = "border-emerald-300 bg-emerald-50 text-emerald-700";
+                                        }
+                                    } else {
+                                        if (opt === q.answer) {
+                                            style = "border-emerald-500 bg-emerald-100 text-emerald-800";
+                                        } else if (isSelected) {
+                                            style = "border-red-500 bg-red-100 text-red-800";
+                                        }
+                                    }
+                                } else if (isSelected) {
+                                    if (multi) {
+                                        style = "border-sky-400 bg-sky-100 text-sky-800";
+                                    } else {
+                                        style = "border-emerald-500 bg-emerald-100 text-emerald-800";
+                                    }
+                                }
+
+                                return `<button onclick="handleAnswer(${idx})" 
+                                            class="p-5 text-left border-2 rounded-xl font-bold transition-all ${style}">
+                                            ${opt}
+                                        </button>`;
+                            }).join('')}
+                        </div>
+
+                        ${multi && state.isAnswerCorrect === null ? `
+                            <button onclick="checkMultiAnswer()" 
+                                class="mt-6 w-full py-4 rounded-xl font-bold transition-all
+                                ${selected.length === q.maxSelect 
+                                    ? 'bg-sky-600 text-white hover:bg-sky-700' 
+                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'}"
+                                ${selected.length !== q.maxSelect ? 'disabled' : ''}>
+                                Comprobar respuesta (${selected.length}/${q.maxSelect})
+                            </button>
+                        ` : ''}
+
+                        ${state.selectedAnswer !== null && state.isAnswerCorrect === false ? `
+                            <div class="mt-6 p-5 bg-amber-50 border border-amber-200 rounded-xl">
+                                <p class="font-bold text-amber-800 mb-2">Explicación:</p>
+                                <p class="text-slate-700">${q.explanation}</p>
+                            </div>
+                            <button onclick="nextQuestion()" class="mt-6 w-full bg-emerald-600 text-white py-4 rounded-xl font-bold hover:bg-emerald-700 transition-all">
+                                Siguiente pregunta
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>`;
+            }
+
+            if (state.view === 'results') {
+                const scorePerc = Math.round((state.score / state.activeQuestions.length) * 100);
+                app.innerHTML = `
+                <div class="max-w-md mx-auto text-center animate-fade-in bg-white p-12 rounded-[3rem] shadow-2xl">
+                    <h2 class="text-2xl font-black mb-2">${state.studentName}</h2>
+                    <p class="text-slate-400 uppercase text-xs font-bold mb-6">${state.currentMode}</p>
+                    <div class="text-7xl font-black text-emerald-600 mb-4">${scorePerc}%</div>
+                    <p class="text-lg font-bold text-slate-700 mb-10">${state.score} / ${state.activeQuestions.length} correctas</p>
+                    <button onclick="location.reload()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">VOLVER AL INICIO</button>
+                    <p class="mt-6 text-xs font-bold text-slate-400">
+                        ${state.emailStatus === 'success' ? '✅ Nota e imagen enviadas al correo' :
+                          state.emailStatus === 'error' ? '⚠️ Error al enviar nota e imagen' :
+                          '⏳ Enviando nota e imagen al correo...'}
+                    </p>
+                </div>`;
+            }
+        }
+        render();
+    </script>
+</body>
+</html>
